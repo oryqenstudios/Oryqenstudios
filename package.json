@@ -1,0 +1,5 @@
+{
+  "name": "oryqen-studios-site",
+  "private": true,
+  "scripts": { "build": "node build.js", "dev": "node serve.js" }
+}
