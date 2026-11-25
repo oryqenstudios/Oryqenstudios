@@ -51,7 +51,7 @@ const projectBy = (slug) => c.projects.find((p) => p.slug === slug);
 
 const pcard = (p, variant = 'grid') => `
   <article class="pcard pcard--${variant}" data-cats="${p.cats.join(' ')}">
-    <a class="pcard__link" href="/projects/${p.slug}/" aria-label="${esc(p.name)} — view project">
+    <a class="pcard__link" href="/projects/${p.slug}/" data-cursor="${variant === 'slide' ? 'Drag · View' : 'View'}" aria-label="${esc(p.name)} — view project">
       <div class="pcard__media" data-tilt>
         <img src="/assets/img/${p.img}" alt="${esc(p.alt)}" loading="lazy" decoding="async" width="1600" height="1100">
         <span class="pcard__badge">${esc(p.badge)}</span>
@@ -163,6 +163,8 @@ const footer = () => `
   </div>
 </footer>
 <a class="wa" href="${site.whatsapp}" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">${waIcon}</a>
+<div class="progress" aria-hidden="true"><i data-progress></i></div>
+<div class="cursor" aria-hidden="true"><span class="cursor__label"></span></div>
 <div class="curtain" aria-hidden="true"><div class="curtain__panel"></div><div class="curtain__mark"><span>ORYQEN STUDIOS<b>.</b></span><i data-count></i></div></div>`;
 
 function page({ url, title, desc = site.description, body, cls = '', ld = [], noindex = false, file }) {
@@ -234,7 +236,7 @@ function buildHome() {
     <div class="hero__shade" aria-hidden="true"></div>
     <div class="wrap hero__inner">
       <p class="eyebrow" data-reveal>Singapore · Website design &amp; digital experiences</p>
-      <h1 class="hero__title" data-split>Purposeful websites for businesses ready to <em>move forward.</em></h1>
+      <h1 class="hero__title" data-split>Websites designed with <em>intent.</em></h1>
       <div class="hero__foot">
         <p class="hero__lead" data-reveal>ORYQEN STUDIOS designs and develops clear, professional websites that strengthen credibility, organise information and guide customers towards taking action.</p>
         <div class="btns" data-reveal>
@@ -245,7 +247,7 @@ function buildHome() {
     </div>
     <div class="hero__meta wrap" data-reveal>
       <span>${esc(site.tagline)}</span>
-      <span class="hero__hint">Move your cursor · Scroll to explore</span>
+      <span class="hero__hint">Drag to turn · Click to pulse · Scroll to explore</span>
       <span class="hero__scroll" aria-hidden="true"><i></i></span>
     </div>
   </section>
@@ -330,7 +332,7 @@ function buildHome() {
       </div>
       <ol class="process__steps" data-steps>
         <span class="process__line" aria-hidden="true"><i data-steps-line></i></span>
-        ${c.processSteps.map((s, i) => `<li class="pstep" data-step="${pad(i + 1)}"><span class="num">${pad(i + 1)}</span><h3>${esc(s.name)}</h3><p>${esc(s.what)}</p></li>`).join('')}
+        ${c.processSteps.map((s, i) => `<li class="pstep" data-step="${pad(i + 1)}" data-cursor="Focus"><span class="num">${pad(i + 1)}</span><h3>${esc(s.name)}</h3><p>${esc(s.what)}</p></li>`).join('')}
       </ol>
     </div>
   </section>
@@ -400,7 +402,7 @@ function buildProjects() {
     })}
     <section class="cover">
       <div class="wrap">
-        <figure class="cover__frame" data-clip>
+        <figure class="cover__frame" data-clip data-tilt>
           <img src="/assets/img/${p.img}" alt="${esc(p.alt)}" width="1600" height="1100" data-parallax="10">
         </figure>
       </div>
@@ -437,7 +439,7 @@ function buildProjects() {
         <div class="pgrid" data-stagger>${others.map((o) => pcard(o, 'grid')).join('')}</div>
       </div>
     </section>
-    <a class="nextp" href="/projects/${next.slug}/">
+    <a class="nextp" href="/projects/${next.slug}/" data-cursor="Next">
       <img src="/assets/img/${next.img}" alt="" loading="lazy" decoding="async" aria-hidden="true">
       <div class="wrap"><p class="eyebrow">Next project</p><p class="nextp__title">${esc(next.name)} ${arrow}</p></div>
     </a>`;
@@ -503,9 +505,12 @@ function buildProcess() {
   ${phead({ eyebrow: 'Our process', title: 'A clear path from first call *to launch*', lead: 'Six stages, each with defined inputs and deliverables, so you always know what happens next.' })}
   <section class="section section--flush">
     <div class="wrap">
+      <nav class="stagenav" aria-label="Process stages" data-stagenav>
+        ${c.processSteps.map((s, i) => `<a href="#stage-${i + 1}"><b>${pad(i + 1)}</b><span>${esc(s.name)}</span></a>`).join('')}
+      </nav>
       <ol class="stages">
         ${c.processSteps.map((s, i) => `
-        <li class="stage">
+        <li class="stage" id="stage-${i + 1}">
           <div class="stage__head"><span class="stage__num" data-reveal>${pad(i + 1)}</span><h2 data-split>${esc(s.name)}</h2></div>
           <dl class="stage__grid" data-stagger>
             <div><dt>What happens</dt><dd>${esc(s.what)}</dd></div>
@@ -561,6 +566,7 @@ function buildAbout() {
 function buildContact() {
   const f = c.contactForm;
   const opts = (arr, ph) => `<option value="">${ph}</option>` + arr.map((x) => `<option>${esc(x)}</option>`).join('');
+  const chipField = (label, name, arr) => `<fieldset class="field field--full field--chips"><legend>${esc(label)}</legend><div class="chipset">${arr.map((x) => `<label class="chip"><input type="radio" name="${name}" value="${esc(x)}" required><span>${esc(x)}</span></label>`).join('')}</div></fieldset>`;
   const body = `
   ${phead({ eyebrow: 'Contact', title: 'Tell us about *your project*', lead: 'Share a few details and we’ll reply with next steps. Fields marked optional can be left blank.', cls: 'phead--short' })}
   <section class="section section--flush">
@@ -577,8 +583,8 @@ function buildContact() {
           <label class="field"><span>Company name</span><input name="company" autocomplete="organization" required></label>
           <label class="field"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
           <label class="field"><span>Phone <em>optional</em></span><input name="phone" type="tel" autocomplete="tel"></label>
-          <label class="field"><span>Industry</span><select name="industry" required>${opts(f.industries, 'Select…')}</select></label>
-          <label class="field"><span>Type of project</span><select name="project_type" required>${opts(f.types, 'Select…')}</select></label>
+          ${chipField('Industry', 'industry', f.industries)}
+          ${chipField('Type of project', 'project_type', f.types)}
           <label class="field"><span>Estimated budget <em>optional</em></span><select name="budget">${opts(f.budgets, '—')}</select></label>
           <label class="field"><span>Preferred timeline <em>optional</em></span><select name="timeline">${opts(f.timelines, '—')}</select></label>
           <label class="field"><span>Existing website <em>optional</em></span><input name="website" inputmode="url" placeholder="https://"></label>
@@ -586,6 +592,7 @@ function buildContact() {
           <label class="field field--full"><span>Project requirements</span><textarea name="requirements" rows="5" required></textarea></label>
         </div>
         <label class="check"><input type="checkbox" name="consent" required><span>I consent to ORYQEN STUDIOS collecting and using my details to respond to this enquiry, as described in the <a href="/privacy-policy/">Privacy Policy</a>.</span></label>
+        <div class="form__meter" aria-hidden="true"><span data-form-meter-text>0 of 7 required details complete</span><i><b data-form-meter></b></i></div>
         <p class="form__error" role="alert" hidden></p>
         <div class="btns">
           <button class="btn btn--solid" type="submit"><span class="btn__label">Send Enquiry</span>${arrow}</button>
@@ -604,6 +611,10 @@ function buildFaq() {
   const body = `
   ${phead({ eyebrow: 'FAQ', title: 'Frequently asked *questions*', lead: 'Direct answers about working with ORYQEN STUDIOS and building a business website in Singapore.', cls: 'phead--short' })}
   <section class="section section--flush">
+    <div class="wrap">
+      <label class="search" data-reveal><span class="eyebrow">Search the questions</span><input type="search" id="faq-search" placeholder="Try “cost”, “SEO” or “mobile”" autocomplete="off" data-faq-search></label>
+      <p class="note" data-faq-empty hidden>No questions match that search. <a class="link-arrow" href="/contact/"><span>Ask us directly</span>${arrow}</a></p>
+    </div>
     <div class="wrap faq-groups">
       ${c.faqGroups.map((g, i) => `<div class="split"><header class="shead"><p class="eyebrow" data-reveal>${pad(i + 1)}</p><h2 class="h3" data-split>${esc(g.title)}</h2></header>${faqList(g.items)}</div>`).join('')}
     </div>
@@ -630,6 +641,36 @@ function buildPricing() {
           ${btn('Request a Quote', '/contact/', k.tag ? 'solid' : 'ghost')}
         </article>`).join('')}
       </div>
+    </div>
+  </section>
+  <section class="section section--tight">
+    <div class="wrap split">
+      ${sectionHead('Package finder', 'Find your *starting point*', 'Answer three quick questions and we’ll point you to the package that usually fits. Your quotation is still scoped to your actual requirements.')}
+      <form class="finder" data-finder>
+        <fieldset><legend>How many pages do you expect?</legend><div class="chipset">
+          <label class="chip"><input type="radio" name="pages" value="0" checked><span>Up to 5</span></label>
+          <label class="chip"><input type="radio" name="pages" value="1"><span>6 to 12</span></label>
+          <label class="chip"><input type="radio" name="pages" value="2"><span>More than 12</span></label>
+        </div></fieldset>
+        <fieldset><legend>What should the site include?</legend><div class="chipset">
+          <label class="chip"><input type="checkbox" value="1" data-why="portfolio or service pages"><span>Portfolio or service pages</span></label>
+          <label class="chip"><input type="checkbox" value="1" data-why="customised page layouts"><span>Customised page layouts</span></label>
+          <label class="chip"><input type="checkbox" value="2" data-why="custom functionality"><span>Booking, ordering or other custom functionality</span></label>
+          <label class="chip"><input type="checkbox" value="2" data-why="advanced integrations"><span>Integrations with other systems</span></label>
+        </div></fieldset>
+        <fieldset><legend>Where is your business today?</legend><div class="chipset">
+          <label class="chip"><input type="radio" name="stage" value="0" checked><span>Launching a first website</span></label>
+          <label class="chip"><input type="radio" name="stage" value="1"><span>Growing, outgrowing the current site</span></label>
+          <label class="chip"><input type="radio" name="stage" value="2"><span>Specialised requirements</span></label>
+        </div></fieldset>
+        <div class="finder__result" aria-live="polite">
+          <p class="eyebrow">A good starting point</p>
+          <p class="finder__name" data-finder-name>${esc(p.packages[0].name)}</p>
+          <p data-finder-why>${esc(p.packages[0].for)}.</p>
+          ${btn('Request a Quote', '/contact/')}
+        </div>
+        <script type="application/json" data-finder-data>${JSON.stringify(p.packages.map((k) => ({ name: k.name, for: k.for })))}</script>
+      </form>
     </div>
   </section>
   <section class="section section--tight">

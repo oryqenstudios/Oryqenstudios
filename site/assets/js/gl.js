@@ -11,6 +11,7 @@
     'attribute vec3 aRnd;',
     'uniform float uTime, uMorph, uAspect, uDpr, uSize, uScale, uReveal;',
     'uniform vec2 uRot, uMouse, uOffset;',
+    'uniform vec3 uPulse;',
     'varying float vAlpha;',
     'varying float vMix;',
     'mat2 rot(float a){ float s = sin(a), c = cos(a); return mat2(c, -s, s, c); }',
@@ -39,6 +40,11 @@
     '  float dist = length(dm);',
     '  float push = smoothstep(0.42, 0.0, dist);',
     '  ndc += (dm / max(dist, 0.0001)) * push * 0.075 / vec2(uAspect, 1.0);',
+    '  vec2 dp = (ndc - uPulse.xy) * vec2(uAspect, 1.0);',
+    '  float dl = length(dp);',
+    '  float ring = smoothstep(0.17, 0.0, abs(dl - uPulse.z * 1.8)) * (1.0 - uPulse.z);',
+    '  ndc += (dp / max(dl, 0.0001)) * ring * 0.12 / vec2(uAspect, 1.0);',
+    '  push = max(push, ring);',
     '  gl_Position = vec4(ndc, 0.0, 1.0);',
     '  if (w < 0.35) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);',
     '  gl_PointSize = uSize * uDpr * (0.55 + aRnd.z) / w * (1.0 + push * 1.6);',
@@ -98,7 +104,7 @@
     attr('aPos', pos); attr('aRnd', rnd);
 
     var U = {};
-    ['uTime', 'uMorph', 'uAspect', 'uDpr', 'uSize', 'uScale', 'uReveal', 'uRot', 'uMouse', 'uOffset', 'uColA', 'uColB', 'uGain']
+    ['uTime', 'uMorph', 'uAspect', 'uDpr', 'uSize', 'uScale', 'uReveal', 'uRot', 'uMouse', 'uOffset', 'uColA', 'uColB', 'uGain', 'uPulse']
       .forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
     gl.uniform3f(U.uColA, 0.42, 0.66, 0.9);   // deep ice blue
     gl.uniform3f(U.uColB, 0.93, 0.97, 1.0);   // near white
@@ -134,6 +140,33 @@
       mouse.active = true;
     }, { passive: true });
 
+    // drag to turn the form (mouse only, so touch scrolling is never hijacked); click or tap sends a pulse
+    var drag = { on: false, x: 0, y: 0, vx: 0, vy: 0, lx: 0, ly: 0, moved: 0 };
+    var pulse = { x: 9, y: 9, age: 1 };
+    var interactive = function (t) { return t.closest && t.closest('a, button, input, select, textarea, label, summary'); };
+    host.addEventListener('pointerdown', function (e) {
+      if (interactive(e.target)) return;
+      drag.moved = 0; drag.lx = e.clientX; drag.ly = e.clientY; drag.down = true;
+      if (e.pointerType === 'mouse' && mode === 'orb') { drag.on = true; host.classList.add('is-grabbing'); }
+    });
+    window.addEventListener('pointermove', function (e) {
+      if (!drag.down) return;
+      var dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
+      drag.lx = e.clientX; drag.ly = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
+      if (drag.on) { drag.vx = dx * 0.006; drag.vy = dy * 0.005; drag.x += drag.vx; drag.y += drag.vy; }
+    }, { passive: true });
+    window.addEventListener('pointerup', function (e) {
+      if (!drag.down) return;
+      drag.down = false; drag.on = false; host.classList.remove('is-grabbing');
+      if (drag.moved < 8) {
+        var r = canvas.getBoundingClientRect();
+        pulse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+        pulse.y = -(((e.clientY - r.top) / r.height) * 2 - 1);
+        pulse.age = 0; kick();
+      }
+    });
+    window.addEventListener('pointercancel', function () { drag.down = false; drag.on = false; host.classList.remove('is-grabbing'); });
+
     var reveal = mode === 'orb' ? 0 : 1, revealOn = mode !== 'orb' || reduce, morph = mode === 'orb' ? 0 : 1;
     document.addEventListener('oryqen:ready', function () { revealOn = true; });
     setTimeout(function () { revealOn = true; }, 3500);
@@ -158,7 +191,11 @@
       gl.uniform1f(U.uTime, t);
       gl.uniform1f(U.uMorph, morph);
       gl.uniform1f(U.uReveal, e);
-      gl.uniform2f(U.uRot, rot.x, rot.y);
+      if (!drag.on) { drag.x += drag.vx; drag.y += drag.vy; drag.vx *= 0.94; drag.vy *= 0.94; drag.y *= 0.985; }
+      drag.y = Math.max(-1.2, Math.min(1.2, drag.y));
+      if (pulse.age < 1) pulse.age = Math.min(1, pulse.age + dt * 0.85);
+      gl.uniform3f(U.uPulse, pulse.x, pulse.y, pulse.age);
+      gl.uniform2f(U.uRot, rot.x + drag.x, rot.y + drag.y);
       gl.uniform2f(U.uMouse, mouse.active ? mouse.x : 9, mouse.active ? mouse.y : 9);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.POINTS, 0, N);
