@@ -248,7 +248,9 @@ function buildHome() {
     <div class="hero__meta wrap" data-reveal>
       <span>${esc(site.tagline)}</span>
       <span class="hero__hint">Drag to turn · Click to pulse · Scroll to explore</span>
-      <span class="hero__scroll" aria-hidden="true"><i></i></span>
+      <span class="hero__stages" role="group" aria-label="Choose the form shown in the animation">
+        ${['Idea', 'Desktop', 'Mobile', 'Identity'].map((l, i) => `<button type="button" data-shape="${i}" aria-pressed="${i === 0}"><b>${pad(i + 1)}</b>${l}</button>`).join('')}
+      </span>
     </div>
   </section>
 

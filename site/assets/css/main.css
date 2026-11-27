@@ -156,6 +156,15 @@ em { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spa
 .hero__scroll i { position: absolute; inset: 0; background: var(--accent); animation: drip 2.2s var(--ease) infinite; }
 @keyframes drip { 0% { transform: translateY(-100%); } 60%, 100% { transform: translateY(100%); } }
 
+.hero__stages { display: flex; gap: 4px; margin-right: 64px; }
+.hero__stages button { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--dim); transition: color 0.3s; }
+.hero__stages button b { font-weight: 500; color: inherit; }
+.hero__stages button::before, .hero__stages button::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 2px; height: 1px; background: var(--line-2); }
+.hero__stages button::after { background: var(--accent); transform: scaleX(var(--p, 0)); transform-origin: left; }
+.hero__stages button:hover { color: var(--text); }
+.hero__stages button.is-active { color: var(--text); }
+.hero__stages button.is-active b { color: var(--accent); }
+
 /* ---------- page header ---------- */
 .phead { position: relative; overflow: hidden; padding: calc(var(--nav-h) + clamp(70px, 12vw, 170px)) 0 clamp(60px, 8vw, 110px); }
 .phead--short { padding-top: calc(var(--nav-h) + clamp(60px, 9vw, 120px)); padding-bottom: clamp(48px, 6vw, 80px); }
@@ -549,7 +558,9 @@ legend { padding: 0; font: 500 0.7rem var(--mono); letter-spacing: 0.12em; text-
   .split > .shead, .process__sticky, .case__aside, .contact__side, .article__side, .stage__head { position: static; }
   .split > .shead { margin-bottom: 8px; }
   .hero__foot { grid-template-columns: 1fr; }
-  .hero__hint, .hero__scroll { display: none; }
+  .hero__hint, .hero__scroll, .hero__meta > span:first-child { display: none; }
+  .hero__stages { margin-right: 60px; } .hero__stages button b { display: none; }
+  .hero__stages button { padding: 0 8px; } .hero__stages button::before, .hero__stages button::after { left: 8px; right: 8px; }
   .statement__media { aspect-ratio: 16 / 10; }
   .svc { grid-template-columns: 40px minmax(0, 1fr) auto; }
   .svc__text { grid-column: 2 / -1; grid-row: 2; }
